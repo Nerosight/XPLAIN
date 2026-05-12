@@ -1,0 +1,55 @@
+name: Bug report
+description: Report a parser that decodes an input incorrectly or crashes.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: parser
+    attributes:
+      label: Which parser?
+      options:
+        - perms
+        - sddl
+        - nmap
+        - other / unsure
+    validations:
+      required: true
+
+  - type: textarea
+    id: input
+    attributes:
+      label: Input
+      description: Paste the exact input string you ran xplain on.
+      placeholder: e.g. D:(A;;CCLCSWRPLORC;;;AU)
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected output
+      description: What did you think xplain would say?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual output
+      description: Paste the output xplain produced (or the traceback if it crashed).
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: xplain version
+      description: From `xplain --version`.
+      placeholder: e.g. 0.1.0
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. Windows 11, Ubuntu 22.04, macOS 14

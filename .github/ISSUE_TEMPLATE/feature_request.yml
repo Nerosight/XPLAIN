@@ -1,0 +1,34 @@
+name: Feature request / new parser
+description: Suggest a new parser or an addition to an existing one.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What format should xplain decode?
+      description: Name the tool/command that produces it, e.g. `wmic process list`, `openssl x509 -text`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Real-world example output
+      description: Paste actual output from the tool. Redact anything sensitive.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is this hard to read today?
+      description: Where do people currently go to decode this? What makes it cryptic?
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+      description: Links to format documentation, edge cases, related parsers.
