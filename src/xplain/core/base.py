@@ -56,3 +56,6 @@ class Parser(ABC):
         the renderer sorts them before display.
         """
         raise NotImplementedError
+    def detect(self, text: str)-> float:
+        """Confidence poll from each parser the format is 0.0 1.0"""
+        return 0.0
