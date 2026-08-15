@@ -5,6 +5,7 @@ Also accepts numeric mode like 4755 or 0755.
 
 from __future__ import annotations
 
+import re
 from typing import Iterable
 
 from xplain.core.base import Annotation, Parser
@@ -67,11 +68,23 @@ _TRAILING = {
 
 _TRIPLET_NAMES = ("owner", "group", "other")
 
+_SYMBOLIC_RE = re.compile(r"^[-dlcbps][-rwsStT]{9}[+.@]?$")
+_NUMERIC_RE = re.compile(r"^[0-7]{3,4}$")
 
 class PermsParser(Parser):
     name = "perms"
     description = "Linux file permission strings (drwxr-xr-x) and numeric modes (4755)."
     example = "drwxr-xr-x"
+
+
+
+    def detect(self, text: str) -> float:
+        text = text.strip()
+        if _SYMBOLIC_RE.match(text):
+            return 0.9
+        if _NUMERIC_RE.match(text):
+            return 0.3
+        return 0.0
 
     def parse(self, text: str) -> Iterable[Annotation]:
         text = text.strip()
