@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from xplain.core.base import Parser
 from xplain.parsers.nmap import NmapParser
@@ -36,3 +36,12 @@ def names() -> List[str]:
 
 def all_parsers() -> List[Parser]:
     return [_PARSERS[n] for n in names()]
+
+def all_detect(text:str) -> List[Tuple[Parser, float]]:
+    scored = []
+    for parser in all_parsers():
+        score = parser.detect(text)
+        if score > 0.0:
+            scored.append((parser, score))
+    scored.sort(key=lambda pair: pair[1], reverse = True)
+    return scored

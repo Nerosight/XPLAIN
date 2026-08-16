@@ -141,12 +141,22 @@ _SECTION_LABELS = {
 }
 
 _SECTION_RE = re.compile(r"[OGDS]:")
-
+_ACE_RE = re.compile(r"\([A-Z]*;[A-Z]*;[A-Z]*;[^;]*;[^;]*;[A-Z0-9-]+\)")
 
 class SddlParser(Parser):
     name = "sddl"
     description = "Windows SDDL strings (default: service-object context for rights)."
     example = "D:(A;;CCLCSWRPLORC;;;AU)"
+
+    def detect(self, text: str) -> float:
+        text = text.strip()
+        has_section = bool(_SECTION_RE.match(text))
+        has_ace = bool(_ACE_RE.search(text))
+        if has_ace and has_section:
+            return 0.9
+        if has_ace or has_section:
+            return 0.6
+        return 0.0
 
     def parse(self, text: str) -> Iterable[Annotation]:
         sections = self._split_sections(text)

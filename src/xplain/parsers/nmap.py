@@ -50,6 +50,14 @@ class NmapParser(Parser):
     description = "nmap default output (STUB - basic port-table only)."
     example = "PORT     STATE    SERVICE\n22/tcp   open     ssh"
 
+    def detect(self, text: str) -> float:
+        if "Nmap scan report" in text:
+            return 0.9
+        if _HEADER_RE.search(text):
+            return 0.9
+        if _PORT_LINE_RE.search(text):
+            return 0.6
+        return 0.0
     def parse(self, text: str) -> Iterable[Annotation]:
         for m in _HEADER_RE.finditer(text):
             yield Annotation(
