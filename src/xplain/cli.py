@@ -9,7 +9,19 @@ from typing import List, Optional
 from xplain import __version__, registry
 from xplain.render import render
 
+_Confident = 0.6
+_MEHH = 0.3
+_TOP_FLAGS = {"--list", "--version", "-h", "--help"}
 
+def _PickOne(ranked):
+    if not ranked:
+        return None
+    best, best_score = ranked[0]
+    if best_score < _Confident:
+        return None
+    if len(ranked) > 1 and best_score - ranked[1][1] < _MEHH:
+        return None
+    return best
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="xplain",
@@ -62,9 +74,12 @@ def _preprocess_argv(argv: List[str]) -> List[str]:
     return argv
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
+
+    if argv and argv[0] not in registry.names() and argv[0] not in _TOP_FLAGS:
+        return _run_detected(" ".join(argv)) ## Will write run detected soon
     argv = _preprocess_argv(argv)
     arg_parser = _build_parser()
     args = arg_parser.parse_args(argv)
