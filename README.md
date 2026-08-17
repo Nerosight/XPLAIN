@@ -62,17 +62,53 @@ xplain --list
 \* `sddl` currently uses **service-object** context for the rights field. The
 same two-letter codes mean different things on files, registry keys, and AD
 objects - `--context` is on the roadmap.
-
 ## Roadmap
 
-Pull requests welcome for any of these:
+Adding a format is deliberately a contained piece of work: a parser is one
+module that yields annotated spans, and the CLI and renderer pick it up
+automatically. The items below are grouped by what each one asks of that
+architecture.
 
-- `--context file|registry|ad` for the sddl parser
-- Full nmap parser: state explanations, `-sV` version detection, NSE script output
-- Additional parsers: `wmic`, registry permission strings, `iptables -L`,
-  `openssl x509 -text`, `ip route`, `dpkg -l` status codes
-- `--json` output mode for tool-to-tool integration
-- A `--no-banner` flag
+### In progress — format auto-detection
+
+Today you have to know what a format is called before `xplain` can help you,
+which is backwards: not knowing is usually the reason you're here. Detection
+lets each parser score how confident it is that a given input is its format, so
+`xplain "D:(A;;CCLCSWRPLORC;;;AU)"` routes itself, and genuinely ambiguous
+input returns a ranked list of candidates rather than a guess.
+
+- [x] `detect()` on the parser base class, defaulting to "not mine"
+- [ ] `detect()` implementations for `perms`, `sddl`, `nmap`
+- [ ] `registry.detect_all()` — poll every parser, rank by confidence
+- [ ] CLI dispatch for input given without a subcommand
+
+### Accuracy
+
+- `--context file|registry|ad` for `sddl`. The rights field currently assumes
+  service-object context; the same two-letter codes mean different things on
+  files, registry keys, and AD objects. This is the known correctness gap.
+- Full `nmap` parser: state explanations, `-sV` version detection, and NSE
+  script output. The current parser reads the port table only.
+
+### Coverage
+
+New parsers, roughly ordered by how often each one turns up in a support queue:
+
+- `iptables -L` rule listings
+- `ip route` output
+- Windows registry permission strings
+- `openssl x509 -text` certificate fields
+- `dpkg -l` status codes
+- `wmic` output
+
+### Integration
+
+- `--json` output mode, so annotations can feed other tools
+- `--no-banner`, for clean piping
+
+Pull requests are welcome for any of these. The Coverage items are the most
+self-contained if you're starting out — see
+[`docs/adding-a-parser.md`](docs/adding-a-parser.md).
 
 ## Contributing
 
