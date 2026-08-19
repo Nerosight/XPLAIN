@@ -6,6 +6,9 @@ import argparse
 import sys
 from typing import List, Optional
 
+from wheel.cli import parser
+
+from tests.test_perms import test_cli_accepts_dash_prefixed_input
 from xplain import __version__, registry
 from xplain.render import render
 
@@ -22,6 +25,7 @@ def _PickOne(ranked):
     if len(ranked) > 1 and best_score - ranked[1][1] < _MEHH:
         return None
     return best
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="xplain",
@@ -72,6 +76,40 @@ def _preprocess_argv(argv: List[str]) -> List[str]:
                 return argv[: i + 1] + ["--"] + argv[i + 1 :]
             break
     return argv
+
+def _run_detected(text: str) -> int:
+    text  = text.strip()
+    if not text:
+        print("No input :O.", file=sys.stderr)
+        return 2
+    ranked = registry.all_detect(text)
+    parser = _PickOne(ranked) ## Decicde which parser is going to be the ONE
+
+    if parser is None:
+        _report_candidate(ranked)
+        return 4
+    print(f"Detected: {parser.description}", file=sys.stderr)
+    try:
+        annotations = list(parser.parse(text))
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
+
+    render(text, annotations)
+    return 0
+
+##List the parsers that the user wants and explain to them, we couldn't auto-detect
+def _report_candidate(ranked) -> None:
+    if not ranked:
+        print("error: could not identify this format.", file=sys.stderr)
+        print("try one explicitly:", file=sys.stderr)
+        candidates = registry.all_parsers()
+    else:
+        print("error: ambiguous input. best guesses:", file=sys.stderr)
+        candidates = [p for p, _ in ranked]
+
+    for p in candidates:
+        print(f"    xplain {p.name:8} {p.description}", file=sys.stderr)
 
 
 def main(argv = None) -> int:
