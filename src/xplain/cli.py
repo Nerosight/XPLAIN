@@ -6,9 +6,6 @@ import argparse
 import sys
 from typing import List, Optional
 
-from wheel.cli import parser
-
-from tests.test_perms import test_cli_accepts_dash_prefixed_input
 from xplain import __version__, registry
 from xplain.render import render
 
@@ -88,7 +85,7 @@ def _run_detected(text: str) -> int:
     if parser is None:
         _report_candidate(ranked)
         return 4
-    print(f"Detected: {parser.description}", file=sys.stderr)
+
     try:
         annotations = list(parser.parse(text))
     except ValueError as e:
@@ -96,6 +93,7 @@ def _run_detected(text: str) -> int:
         return 3
 
     render(text, annotations)
+    print(f"Detected: {parser.description}", file=sys.stderr)
     return 0
 
 ##List the parsers that the user wants and explain to them, we couldn't auto-detect
@@ -115,6 +113,9 @@ def _report_candidate(ranked) -> None:
 def main(argv = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
+
+    if not argv and not sys.stdin.isatty():
+        return _run_detected(sys.stdin.read())
 
     if argv and argv[0] not in registry.names() and argv[0] not in _TOP_FLAGS:
         return _run_detected(" ".join(argv)) ## Will write run detected soon

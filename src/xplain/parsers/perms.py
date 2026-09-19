@@ -68,7 +68,7 @@ _TRAILING = {
 
 _TRIPLET_NAMES = ("owner", "group", "other")
 
-_SYMBOLIC_RE = re.compile(r"^[-dlcbps][-rwsStT]{9}[+.@]?$")
+_SYMBOLIC_RE = re.compile(r"^[-dlcbps][-rwxsStT]{9}[+.@]?$")
 _NUMERIC_RE = re.compile(r"^[0-7]{3,4}$")
 
 class PermsParser(Parser):
