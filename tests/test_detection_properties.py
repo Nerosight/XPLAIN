@@ -119,6 +119,7 @@ any_input = st.one_of(st.text(), *_valid.values(), near_miss(), near_miss(), nea
 
 @given(any_input)
 @example("G:S-1-5-1000-1000-940S:(AU;;CRCCCRCCCCSD;;;WD)(A;;CC;;;AN")  # truncated mid-ACE
+@example("O:ANG:S-1-5-1000-1000-10000-1000000-999999950S:(AU;;CRLC;;;DA)(O:;;DT;;;LU)")  # section marker inside an ACE
 def test_a_chosen_parser_can_parse_the_input(text):
     outcome = resolve(text)
     if isinstance(outcome, Chosen):

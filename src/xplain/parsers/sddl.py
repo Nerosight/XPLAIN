@@ -157,6 +157,12 @@ class SddlParser(Parser):
         # Truncated mid-ACE, e.g. a partial copy-paste: parse would reject it.
         unclosed_ace = text.rfind("(") > text.rfind(")")
         if has_ace and has_section and not unclosed_ace:
+            # The regexes can't see every malformation parse rejects (e.g. a
+            # section marker inside an ACE), so let parse confirm.
+            try:
+                list(self.parse(text))
+            except ValueError:
+                return 0.2
             return 0.9
         if has_ace:
             # Bare or truncated: below the lone-Candidate floor, since parse
