@@ -31,4 +31,6 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Run tests
+        env:
+          HYPOTHESIS_PROFILE: ci
         run: pytest -v

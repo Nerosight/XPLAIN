@@ -154,10 +154,13 @@ class SddlParser(Parser):
     def detect(self, text: str) -> float:
         has_section = bool(_SECTION_RE.match(text))
         has_ace = bool(_ACE_RE.search(text))
-        if has_ace and has_section:
+        # Truncated mid-ACE, e.g. a partial copy-paste: parse would reject it.
+        unclosed_ace = text.rfind("(") > text.rfind(")")
+        if has_ace and has_section and not unclosed_ace:
             return 0.9
         if has_ace:
-            # A bare ACE: below the lone-Candidate floor, since parse needs a section (#7).
+            # Bare or truncated: below the lone-Candidate floor, since parse
+            # needs a section (#7) and closed ACEs.
             return 0.2
         if _OWNER_GROUP_ONLY_RE.match(text):
             return 0.6
