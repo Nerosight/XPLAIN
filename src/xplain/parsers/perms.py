@@ -79,7 +79,6 @@ class PermsParser(Parser):
 
 
     def detect(self, text: str) -> float:
-        text = text.strip()
         if _SYMBOLIC_RE.match(text):
             return 0.9
         if _NUMERIC_RE.match(text):
