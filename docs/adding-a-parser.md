@@ -66,11 +66,47 @@ Add an import and `_register(MyFormatParser())` line to
 `src/xplain/registry.py`. That's it - the CLI picks it up automatically as
 a new subcommand.
 
-## 5. Add tests
+## 5. Implement `detect()`
+
+`detect()` lets `xplain '<input>'` pick your parser without being told. It
+returns a Confidence from 0.0 ("not mine") to 1.0. The default returns 0.0, so
+a parser without `detect()` is only reachable by name.
+
+```python
+    def detect(self, text: str) -> float:
+        if _FULL_FORMAT_RE.match(text):
+            return 0.9
+        return 0.0
+```
+
+The contract:
+
+- `text` is already stripped of surrounding whitespace.
+- Return a float in 0.0-1.0. Anything else raises an error in Detection.
+- **If your `detect()` can get the parser Chosen, your `parse()` must succeed
+  on that text.** When the input looks like your format but `parse()` would
+  reject it, return a Confidence below 0.3, so the user gets a suggestion
+  instead of a crash.
+
+How Confidences turn into an outcome is in `src/xplain/detection.py`. In
+short, a parser that is the only Candidate needs 0.3, and one with rivals
+needs 0.6 and a lead of 0.3.
+
+## 6. Add tests
 
 Drop `tests/test_myformat.py`. Pin a few real inputs and assert on the
 annotations the parser returns. Keep at least one regression test for any
 weirdness you find in real-world inputs.
+
+For detection, add real samples to the corpus. No code is needed:
+
+- `tests/corpus/myformat/*.txt`: inputs that must be detected as your format.
+- `tests/corpus/unknown/*.txt`: lookalikes that must not be.
+- `tests/corpus/known-gaps/myformat/*.txt`: inputs you want handled but
+  aren't yet. They run as expected failures; move them out once fixed.
+
+Then add a valid-sample strategy for your format to `_valid` in
+`tests/test_detection_properties.py`, so the property tests cover it.
 
 ## Style notes
 

@@ -1,0 +1,2 @@
+# Corpus samples are byte-exact inputs; keep them LF on every OS.
+tests/corpus/** text eol=lf

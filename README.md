@@ -36,6 +36,10 @@ pip install -e ".[dev]"
 ## Usage
 
 ```bash
+# Don't know the format? Leave the parser name out and xplain detects it
+xplain "D:(A;;CCLCSWRPLORC;;;AU)"
+xplain 755
+
 # Linux file permissions
 xplain perms drwxr-xr-x
 xplain perms -rwsr-xr-x          # leading-dash inputs are handled
@@ -69,18 +73,18 @@ module that yields annotated spans, and the CLI and renderer pick it up
 automatically. The items below are grouped by what each one asks of that
 architecture.
 
-### In progress — format auto-detection
+### Done — format auto-detection
 
-Today you have to know what a format is called before `xplain` can help you,
-which is backwards: not knowing is usually the reason you're here. Detection
+You shouldn't have to know what a format is called before `xplain` can help
+you: not knowing is usually the reason you're here. Detection
 lets each parser score how confident it is that a given input is its format, so
 `xplain "D:(A;;CCLCSWRPLORC;;;AU)"` routes itself, and genuinely ambiguous
 input returns a ranked list of candidates rather than a guess.
 
 - [x] `detect()` on the parser base class, defaulting to "not mine"
-- [ ] `detect()` implementations for `perms`, `sddl`, `nmap`
-- [ ] `registry.detect_all()` — poll every parser, rank by confidence
-- [ ] CLI dispatch for input given without a subcommand
+- [x] `detect()` implementations for `perms`, `sddl`, `nmap`
+- [x] `detection.resolve()`: poll every parser, rank by confidence
+- [x] CLI dispatch for input given without a subcommand
 
 ### Accuracy
 

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Format detection: `xplain '<input>'` with no parser name picks the format
+  itself. Unclear input lists the likely parsers instead of guessing.
+- Detection corpus (`tests/corpus/`), rule-table tests and Hypothesis property
+  tests. Adding a real-world sample needs no code.
+
+### Fixed
+- `xplain 755` and other numeric modes are now detected as `perms` instead of
+  being reported as "ambiguous".
+- Windows paths and prose starting with a drive letter (`D:\Users\...`) are no
+  longer detected as SDDL.
+- A bare or truncated ACE is no longer detected as SDDL and then rejected.
+  xplain now suggests `xplain sddl '<input>'` instead.
+
 ## [0.1.0] - Initial release
 
 ### Added
