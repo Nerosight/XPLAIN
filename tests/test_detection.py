@@ -93,3 +93,10 @@ def test_defaults_to_the_registered_parsers():
     outcome = resolve("D:(A;;GA;;;SY)")
     assert isinstance(outcome, Chosen)
     assert outcome.parser.name == "sddl"
+
+
+def test_bare_ace_is_ambiguous_with_sddl_as_the_only_candidate():
+    # sddl cannot parse an ACE without a section yet (#7), so it must not be Chosen.
+    outcome = resolve("(A;;GA;;;SY)")
+    assert isinstance(outcome, Ambiguous)
+    assert [c.parser.name for c in outcome.candidates] == ["sddl"]

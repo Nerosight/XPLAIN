@@ -149,12 +149,14 @@ class SddlParser(Parser):
     example = "D:(A;;CCLCSWRPLORC;;;AU)"
 
     def detect(self, text: str) -> float:
-        text = text.strip()
         has_section = bool(_SECTION_RE.match(text))
         has_ace = bool(_ACE_RE.search(text))
         if has_ace and has_section:
             return 0.9
-        if has_ace or has_section:
+        if has_ace:
+            # A bare ACE: below the lone-Candidate floor, since parse needs a section (#7).
+            return 0.2
+        if has_section:
             return 0.6
         return 0.0
 

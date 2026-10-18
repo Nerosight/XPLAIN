@@ -6,22 +6,10 @@ import argparse
 import sys
 from typing import List, Optional
 
-from xplain import __version__, registry
+from xplain import __version__, detection, registry
 from xplain.render import render
 
-_Confident = 0.6
-_MEHH = 0.3
 _TOP_FLAGS = {"--list", "--version", "-h", "--help"}
-
-def _PickOne(ranked):
-    if not ranked:
-        return None
-    best, best_score = ranked[0]
-    if best_score < _Confident:
-        return None
-    if len(ranked) > 1 and best_score - ranked[1][1] < _MEHH:
-        return None
-    return best
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -79,12 +67,11 @@ def _run_detected(text: str) -> int:
     if not text:
         print("No input :O.", file=sys.stderr)
         return 2
-    ranked = registry.all_detect(text)
-    parser = _PickOne(ranked) ## Decicde which parser is going to be the ONE
-
-    if parser is None:
-        _report_candidate(ranked)
+    outcome = detection.resolve(text)
+    if not isinstance(outcome, detection.Chosen):
+        _report_candidate(outcome, text)
         return 4
+    parser = outcome.parser
 
     try:
         annotations = list(parser.parse(text))
@@ -97,14 +84,18 @@ def _run_detected(text: str) -> int:
     return 0
 
 ##List the parsers that the user wants and explain to them, we couldn't auto-detect
-def _report_candidate(ranked) -> None:
-    if not ranked:
+def _report_candidate(outcome, text: str) -> None:
+    if isinstance(outcome, detection.Ambiguous) and len(outcome.candidates) == 1:
+        name = outcome.candidates[0].parser.name
+        print(f"error: not sure this is {name}. try: xplain {name} '{text}'", file=sys.stderr)
+        return
+    if isinstance(outcome, detection.Unknown):
         print("error: could not identify this format.", file=sys.stderr)
         print("try one explicitly:", file=sys.stderr)
         candidates = registry.all_parsers()
     else:
         print("error: ambiguous input. best guesses:", file=sys.stderr)
-        candidates = [p for p, _ in ranked]
+        candidates = [c.parser for c in outcome.candidates]
 
     for p in candidates:
         print(f"    xplain {p.name:8} {p.description}", file=sys.stderr)
