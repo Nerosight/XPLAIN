@@ -154,19 +154,16 @@ class SddlParser(Parser):
     def detect(self, text: str) -> float:
         has_section = bool(_SECTION_RE.match(text))
         has_ace = bool(_ACE_RE.search(text))
-        # Truncated mid-ACE, e.g. a partial copy-paste: parse would reject it.
-        unclosed_ace = text.rfind("(") > text.rfind(")")
-        if has_ace and has_section and not unclosed_ace:
-            # The regexes can't see every malformation parse rejects (e.g. a
-            # section marker inside an ACE), so let parse confirm.
+        if has_ace and has_section:
+            # The regexes can't see every malformation parse rejects (a
+            # truncated ACE, a section marker inside an ACE), so let parse confirm.
             try:
                 list(self.parse(text))
             except ValueError:
                 return 0.2
             return 0.9
         if has_ace:
-            # Bare or truncated: below the lone-Candidate floor, since parse
-            # needs a section (#7) and closed ACEs.
+            # A bare ACE: below the lone-Candidate floor, since parse needs a section (#7).
             return 0.2
         if _OWNER_GROUP_ONLY_RE.match(text):
             return 0.6
