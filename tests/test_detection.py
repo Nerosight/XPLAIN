@@ -100,3 +100,9 @@ def test_bare_ace_is_ambiguous_with_sddl_as_the_only_candidate():
     outcome = resolve("(A;;GA;;;SY)")
     assert isinstance(outcome, Ambiguous)
     assert [c.parser.name for c in outcome.candidates] == ["sddl"]
+
+
+def test_junk_between_section_marker_and_ace_is_not_chosen():
+    # The table's rule: a section marker counts when an ACE (or ACL flags) follows it.
+    outcome = resolve("D:hello(A;;GA;;;SY)")
+    assert not isinstance(outcome, Chosen)

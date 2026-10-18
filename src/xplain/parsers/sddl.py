@@ -141,10 +141,15 @@ _SECTION_LABELS = {
 }
 
 _SECTION_RE = re.compile(r"[OGDS]:")
-_ACE_RE = re.compile(r"\([A-Z]*;[A-Z]*;[A-Z]*;[^;]*;[^;]*;[A-Z0-9-]+\)")
+# Rights are two-letter codes or a hex mask (common on files: 0x1200a9).
+_ACE_RE = re.compile(r"\([A-Z]*;[A-Z]*;(?:[A-Z]*|0x[0-9A-Fa-f]+);[^;]*;[^;]*;[A-Z0-9-]+\)")
 _SID_PATTERN = "(?:" + "|".join(_WELL_KNOWN_SIDS) + r"|S-1-\d+(?:-\d+)+)"
-# Owner and/or group sections with nothing else, e.g. "O:BAG:SY".
-_OWNER_GROUP_ONLY_RE = re.compile(rf"(?:[OG]:{_SID_PATTERN})+$")
+# The shape of a whole SDDL string: owner/group SIDs, then DACL/SACL sections
+# holding ACL flags followed only by parenthesised ACEs.
+_ACL_FLAG_PATTERN = "(?:" + "|".join(sorted(_ACL_FLAGS, key=len, reverse=True)) + ")"
+_STRUCTURE_RE = re.compile(
+    rf"(?P<owner_group>(?:[OG]:{_SID_PATTERN})*)(?:[DS]:{_ACL_FLAG_PATTERN}*(?:\([^()]*\))*)*"
+)
 
 class SddlParser(Parser):
     name = "sddl"
@@ -152,23 +157,28 @@ class SddlParser(Parser):
     example = "D:(A;;CCLCSWRPLORC;;;AU)"
 
     def detect(self, text: str) -> float:
-        has_section = bool(_SECTION_RE.match(text))
+        structure = _STRUCTURE_RE.fullmatch(text)
         has_ace = bool(_ACE_RE.search(text))
-        if has_ace and has_section:
-            # The regexes can't see every malformation parse rejects (a
-            # truncated ACE, a section marker inside an ACE), so let parse confirm.
-            try:
-                list(self.parse(text))
-            except ValueError:
-                return 0.2
-            return 0.9
+        if structure and has_ace:
+            return self._confirmed_by_parse(text, 0.9)
+        if structure and structure.group("owner_group"):
+            # Owner/group SIDs, optionally with empty ACLs: "O:BAG:SY", "O:BAD:PAI".
+            return self._confirmed_by_parse(text, 0.6)
         if has_ace:
-            # A bare ACE: below the lone-Candidate floor, since parse needs a section (#7).
+            # SDDL-shaped but not well-formed around its ACEs (bare, truncated,
+            # or junk after a marker): below the lone-Candidate floor (#7).
             return 0.2
-        if _OWNER_GROUP_ONLY_RE.match(text):
-            return 0.6
         # A bare marker such as "D:" is as likely to be a drive letter.
         return 0.0
+
+    def _confirmed_by_parse(self, text: str, confidence: float) -> float:
+        # The regexes can't see every malformation parse rejects (e.g. a
+        # section marker inside an ACE), so let parse confirm.
+        try:
+            list(self.parse(text))
+        except ValueError:
+            return 0.2
+        return confidence
 
     def parse(self, text: str) -> Iterable[Annotation]:
         sections = self._split_sections(text)

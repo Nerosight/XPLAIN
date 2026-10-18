@@ -49,17 +49,34 @@ _ace = st.builds(
     lambda t, f, r, s: f"({t};{f};{r};;;{s})",
     st.sampled_from(sorted(sddl._ACE_TYPES)),
     _two_letter(sddl._ACE_FLAGS),
-    st.lists(st.sampled_from(sorted(sddl._SERVICE_RIGHTS)), min_size=1, max_size=6).map("".join),
+    st.one_of(
+        st.lists(st.sampled_from(sorted(sddl._SERVICE_RIGHTS)), min_size=1, max_size=6).map("".join),
+        st.integers(1, 0x1F01FF).map(hex),  # a rights mask, as on files: 0x1200a9
+    ),
     _sid,
 )
 
-sddl_string = st.builds(
-    lambda owner, group, kind, flags, aces: owner + group + kind + flags + "".join(aces),
-    st.one_of(st.just(""), _sid.map(lambda s: "O:" + s)),
-    st.one_of(st.just(""), _sid.map(lambda s: "G:" + s)),
-    st.sampled_from(["D:", "S:"]),
-    st.sampled_from(["", "P", "AI", "PAI", "AR"]),
-    st.lists(_ace, min_size=1, max_size=4),
+_owner = st.one_of(st.just(""), _sid.map(lambda s: "O:" + s))
+_group = st.one_of(st.just(""), _sid.map(lambda s: "G:" + s))
+_acl_flags = st.sampled_from(["", "P", "AI", "PAI", "AR"])
+
+sddl_string = st.one_of(
+    st.builds(
+        lambda owner, group, kind, flags, aces: owner + group + kind + flags + "".join(aces),
+        _owner,
+        _group,
+        st.sampled_from(["D:", "S:"]),
+        _acl_flags,
+        st.lists(_ace, min_size=1, max_size=4),
+    ),
+    # Owner and/or group, optionally with an empty DACL: "O:BAG:SY", "O:BAD:PAI".
+    st.builds(
+        lambda owner, group, dacl, flags: owner + group + (("D:" + flags) if dacl else ""),
+        _sid.map(lambda s: "O:" + s),
+        _group,
+        st.booleans(),
+        _acl_flags,
+    ),
 )
 
 nmap_port_lines = st.lists(
