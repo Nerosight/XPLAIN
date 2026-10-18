@@ -142,6 +142,9 @@ _SECTION_LABELS = {
 
 _SECTION_RE = re.compile(r"[OGDS]:")
 _ACE_RE = re.compile(r"\([A-Z]*;[A-Z]*;[A-Z]*;[^;]*;[^;]*;[A-Z0-9-]+\)")
+_SID_PATTERN = "(?:" + "|".join(_WELL_KNOWN_SIDS) + r"|S-1-\d+(?:-\d+)+)"
+# Owner and/or group sections with nothing else, e.g. "O:BAG:SY".
+_OWNER_GROUP_ONLY_RE = re.compile(rf"(?:[OG]:{_SID_PATTERN})+$")
 
 class SddlParser(Parser):
     name = "sddl"
@@ -156,8 +159,9 @@ class SddlParser(Parser):
         if has_ace:
             # A bare ACE: below the lone-Candidate floor, since parse needs a section (#7).
             return 0.2
-        if has_section:
+        if _OWNER_GROUP_ONLY_RE.match(text):
             return 0.6
+        # A bare marker such as "D:" is as likely to be a drive letter.
         return 0.0
 
     def parse(self, text: str) -> Iterable[Annotation]:

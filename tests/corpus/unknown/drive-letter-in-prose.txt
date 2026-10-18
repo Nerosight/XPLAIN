@@ -1,0 +1,1 @@
+G: drive is mapped to \\fileserver\share
