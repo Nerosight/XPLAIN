@@ -105,6 +105,10 @@ For detection, add real samples to the corpus. No code is needed:
 - `tests/corpus/known-gaps/myformat/*.txt`: inputs you want handled but
   aren't yet. They run as expected failures; move them out once fixed.
 
+Create sample files with an editor or a file-writing tool, not with shell
+`printf` or heredocs: those rewrite backslashes (`\U`, `\\`, `\n`), and a
+sample must hold the input byte for byte.
+
 Then add a valid-sample strategy for your format to `_valid` in
 `tests/test_detection_properties.py`, so the property tests cover it.
 
